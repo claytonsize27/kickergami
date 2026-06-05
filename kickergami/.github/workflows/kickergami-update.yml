@@ -1,0 +1,64 @@
+name: Kickergami Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 11:45 PM Eastern is 03:45 UTC during daylight time and 04:45 UTC
+    # during standard time. Run both; database idempotency prevents duplicates.
+    # Thursday window -> Friday UTC.
+    - cron: "45 3 * * 5"
+    - cron: "45 4 * * 5"
+    # Saturday window -> Sunday UTC.
+    - cron: "45 3 * * 0"
+    - cron: "45 4 * * 0"
+    # Sunday window -> Monday UTC.
+    - cron: "45 3 * * 1"
+    - cron: "45 4 * * 1"
+    # Monday window -> Tuesday UTC.
+    - cron: "45 3 * * 2"
+    - cron: "45 4 * * 2"
+
+concurrency:
+  group: kickergami-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      KICKERGAMI_DATA_SOURCE: nflverse_pbp
+      KICKERGAMI_NFLVERSE_CACHE_DIR: /tmp/kickergami-nflverse-cache
+      KICKERGAMI_NFLVERSE_REFRESH: "true"
+      KICKERGAMI_SKIP_OFFSEASON: "true"
+      X_API_KEY: ${{ secrets.X_API_KEY }}
+      X_API_SECRET: ${{ secrets.X_API_SECRET }}
+      X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+      X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+      TWEETS_ENABLED: ${{ vars.TWEETS_ENABLED || 'false' }}
+      DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: kickergami/requirements.txt
+
+      - name: Install dependencies
+        working-directory: kickergami
+        run: pip install -r requirements.txt
+
+      - name: Validate deployment
+        working-directory: kickergami
+        run: python scripts/validate_deployment.py --require-cloud
+
+      - name: Run Kickergami update
+        working-directory: kickergami
+        run: python scripts/run_scheduled_update.py
+

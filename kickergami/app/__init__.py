@@ -1,0 +1,2 @@
+"""Kickergami application package."""
+

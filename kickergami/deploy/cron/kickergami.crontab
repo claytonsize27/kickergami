@@ -1,0 +1,8 @@
+# Run from a machine configured for America/New_York time.
+# Edit PROJECT_DIR if this repo lives elsewhere.
+PROJECT_DIR=/path/to/Kickeragami/kickergami
+
+45 23 * * 4 cd $PROJECT_DIR && python scripts/run_scheduled_update.py
+45 23 * * 0 cd $PROJECT_DIR && python scripts/run_scheduled_update.py
+45 23 * * 1 cd $PROJECT_DIR && python scripts/run_scheduled_update.py
+45 23 * * 6 cd $PROJECT_DIR && python scripts/run_scheduled_update.py

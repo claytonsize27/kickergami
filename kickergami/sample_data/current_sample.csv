@@ -1,0 +1,4 @@
+date,season,week,season_type,game_id,player_id,player_name,team,opponent,xp_made,xp_attempts,fg_made,fg_attempts,fg_made_distances
+2026-09-13,2026,1,REG,2026_01_DAL_PHI,k101,Existing Combo,PHI,DAL,2,2,1,1,33
+2026-09-14,2026,1,REG,2026_01_NYG_WAS,k102,Fresh Foot,WAS,NYG,4,5,4,5,"28,39,44,52"
+
