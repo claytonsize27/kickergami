@@ -29,6 +29,7 @@ pytest
 
 ```bash
 python scripts/backfill_historical.py sample_data/historical_sample.csv
+python scripts/backfill_nflverse.py --start-season 1999
 python scripts/update_kickergami.py sample_data/current_sample.csv
 python scripts/run_scheduled_update.py
 python scripts/validate_deployment.py --require-cloud

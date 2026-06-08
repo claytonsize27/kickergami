@@ -90,6 +90,14 @@ python scripts/backfill_historical.py sample_data/historical_sample.csv
 
 The backfill processes rows chronologically, inserts `kicker_games`, creates first-seen `kicker_combos`, increments repeat occurrences, updates `season_tracker`, and skips already-seen `game_id + player_id` rows when rerun.
 
+For 1999-present, you can backfill directly from public nflverse PBP without uploading CSVs:
+
+```bash
+python scripts/backfill_nflverse.py --start-season 1999
+```
+
+In GitHub Actions, run `Kickergami nflverse Backfill` after the 1970-1998 CSV backfill.
+
 ## Current Completed-Game Update
 
 After backfill, process a completed-games CSV:

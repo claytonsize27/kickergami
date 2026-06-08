@@ -33,7 +33,17 @@ cd C:\Users\clayt\OneDrive\Documents\Kickeragami\kickergami
 python scripts\backfill_historical.py C:\path\to\historical_1970_1998.csv
 ```
 
-3. Backfill 1999-present from normalized CSV, or add/use a separate nflverse historical backfill pass.
+3. Backfill 1999-present from nflverse:
+
+```powershell
+python scripts\backfill_nflverse.py --start-season 1999
+```
+
+In GitHub Actions, run:
+
+```text
+Actions -> Kickergami nflverse Backfill -> Run workflow
+```
 
 The current scheduled updater handles 1999-present public nflverse PBP going forward. The required 1970-1998 data still has to come from a normalized historical file because nflverse PBP starts at 1999.
 

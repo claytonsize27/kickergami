@@ -1,0 +1,46 @@
+name: Kickergami nflverse Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_season:
+        description: "First nflverse season to backfill. nflverse PBP starts at 1999."
+        required: true
+        default: "1999"
+      end_season:
+        description: "Last season to backfill. Leave blank to use current NFL season."
+        required: false
+        default: ""
+
+jobs:
+  nflverse-backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: kickergami/requirements.txt
+
+      - name: Install dependencies
+        working-directory: kickergami
+        run: pip install -r requirements.txt
+
+      - name: Run nflverse historical backfill
+        working-directory: kickergami
+        run: |
+          if [ -n "${{ inputs.end_season }}" ]; then
+            python scripts/backfill_nflverse.py --start-season "${{ inputs.start_season }}" --end-season "${{ inputs.end_season }}"
+          else
+            python scripts/backfill_nflverse.py --start-season "${{ inputs.start_season }}"
+          fi
+

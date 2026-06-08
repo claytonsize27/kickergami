@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.backfill import _game_exists, _insert_combo, _insert_game
 from app.combo import Combo
@@ -38,15 +39,21 @@ def process_current_records(
     settings = settings or get_settings()
     twitter_client = twitter_client or TwitterClient(settings)
     result = UpdateResult()
+    seen_combos = {key for key in session.scalars(select(KickerCombo.combo_key)).all()}
 
     for record in sorted(records, key=lambda r: (r.date, r.season, r.week, r.game_id, r.player_name)):
         if _game_exists(session, record):
             result.skipped_games += 1
             continue
 
-        combo = session.get(KickerCombo, record.combo_key)
-        if combo is not None:
+        if record.combo_key in seen_combos:
             _insert_game(session, record, False)
+            combo = session.get(KickerCombo, record.combo_key)
+            if combo is None:
+                session.flush()
+                combo = session.get(KickerCombo, record.combo_key)
+            if combo is None:
+                raise RuntimeError(f"Combo was marked seen but not found: {record.combo_key}")
             combo.occurrence_count += 1
             result.inserted_games += 1
             result.repeats += 1
@@ -58,6 +65,7 @@ def process_current_records(
         )
         _insert_game(session, record, True)
         _insert_combo(session, record)
+        seen_combos.add(record.combo_key)
         tracker = record_new_kickergami(session, record)
         tweet_text = build_tweet_text(record, closest, tracker.kickergami_count)
         tweet_type = tweet_type_for_settings(settings)
@@ -72,4 +80,3 @@ def process_current_records(
     session.commit()
     logger.info("Update result: %s", result)
     return result
-

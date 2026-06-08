@@ -65,13 +65,30 @@ DRY_RUN=false
 
 Kickergami must have historical combos before real posting.
 
-Use the manual workflow:
+First, use the manual CSV workflow for 1970-1998:
 
 ```text
 Actions -> Kickergami Backfill -> Run workflow
 ```
 
-Provide a normalized historical CSV path. For real production, backfill all available 1970-present data before enabling real tweets.
+Provide the normalized 1970-1998 historical CSV path, such as:
+
+```text
+sample_data/nfl_official_1970_1998_gsis_enhanced_partial.csv
+```
+
+Then backfill 1999-present directly from nflverse with no upload:
+
+```text
+Actions -> Kickergami nflverse Backfill -> Run workflow
+```
+
+Use:
+
+```text
+start_season: 1999
+end_season: blank
+```
 
 The public nflverse feed covers 1999-present play-by-play. The required 1970-1998 history still needs normalized historical CSV data.
 
@@ -147,4 +164,3 @@ For production, store environment variables in the cloud provider's secret manag
 - `TWEETS_ENABLED=true`.
 - `DRY_RUN=false`.
 - Local scheduled tasks are disabled or removed.
-
