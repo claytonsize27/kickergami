@@ -38,6 +38,7 @@ jobs:
       X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
       TWEETS_ENABLED: ${{ vars.TWEETS_ENABLED || 'false' }}
       DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout

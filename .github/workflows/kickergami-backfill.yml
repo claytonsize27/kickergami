@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       historical_csv_path:
-        description: "Path in the repo or mounted workspace to normalized historical CSV"
+        description: "CSV path relative to the kickergami/ folder, e.g. sample_data/nfl_official_1970_1998_upload.csv"
         required: true
         default: "sample_data/historical_sample.csv"
 
@@ -14,6 +14,7 @@ jobs:
     timeout-minutes: 120
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout
@@ -29,6 +30,17 @@ jobs:
       - name: Install dependencies
         working-directory: kickergami
         run: pip install -r requirements.txt
+
+      - name: Validate historical CSV path
+        working-directory: kickergami
+        run: |
+          if [ ! -f "${{ inputs.historical_csv_path }}" ]; then
+            echo "Historical CSV not found: ${{ inputs.historical_csv_path }}"
+            echo "Paths are relative to the kickergami/ folder."
+            echo "Available sample_data files:"
+            find sample_data -maxdepth 1 -type f -print | sort
+            exit 1
+          fi
 
       - name: Run historical backfill
         working-directory: kickergami
