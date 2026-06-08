@@ -83,20 +83,27 @@ def _insert_combo(session: Session, record: KickerGameRecord) -> None:
 def process_records(session: Session, records: list[KickerGameRecord]) -> BackfillResult:
     result = BackfillResult()
     ordered = sorted(records, key=lambda r: (r.date, r.season, r.week, r.game_id, r.player_name))
+    seen_combos = {key for key in session.scalars(select(KickerCombo.combo_key)).all()}
 
     for record in ordered:
         if _game_exists(session, record):
             result.skipped_games += 1
             continue
 
-        combo = session.get(KickerCombo, record.combo_key)
-        if combo is None:
+        if record.combo_key not in seen_combos:
             _insert_game(session, record, True)
             _insert_combo(session, record)
+            seen_combos.add(record.combo_key)
             record_new_kickergami(session, record)
             result.new_combos += 1
         else:
             _insert_game(session, record, False)
+            combo = session.get(KickerCombo, record.combo_key)
+            if combo is None:
+                session.flush()
+                combo = session.get(KickerCombo, record.combo_key)
+            if combo is None:
+                raise RuntimeError(f"Combo was marked seen but not found: {record.combo_key}")
             combo.occurrence_count += 1
             result.repeats += 1
         result.inserted_games += 1
@@ -104,4 +111,3 @@ def process_records(session: Session, records: list[KickerGameRecord]) -> Backfi
     session.commit()
     logger.info("Backfill result: %s", result)
     return result
-
