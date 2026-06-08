@@ -3,6 +3,11 @@
 *.sqlite
 *.sqlite3
 data/cache/
+sample_data/.gsis_gamebooks/
+sample_data/.nfl_annual_summaries/
+sample_data/.nfl_club_media_guides/
+sample_data/.nfl_gamecenter_gamebooks/
+sample_data/.nfl_playoff_logs/
 __pycache__/
 .pytest_cache/
 .venv/

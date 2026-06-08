@@ -5,13 +5,22 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from datetime import date
 from pathlib import Path
+from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.backfill import BackfillResult, process_records
 from app.data_sources.nflverse_pbp import current_nfl_season, load_current_nflverse_records
 from app.db import create_session_factory, init_db
+
+
+def default_end_season(today: date | None = None) -> int:
+    today = today or date.today()
+    if 3 <= today.month <= 8:
+        return today.year - 1
+    return current_nfl_season(today)
 
 
 def _merge_results(total: BackfillResult, current: BackfillResult) -> BackfillResult:
@@ -25,7 +34,7 @@ def _merge_results(total: BackfillResult, current: BackfillResult) -> BackfillRe
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--start-season", type=int, default=1999)
-    parser.add_argument("--end-season", type=int, default=current_nfl_season())
+    parser.add_argument("--end-season", type=int, default=default_end_season())
     parser.add_argument("--database-url", default=None)
     parser.add_argument("--cache-dir", default="data/cache/nflverse")
     parser.add_argument("--refresh", action=argparse.BooleanOptionalAction, default=True)
@@ -44,11 +53,20 @@ def main() -> None:
     with session_factory() as session:
         for season in range(args.start_season, args.end_season + 1):
             logging.info("Backfilling nflverse season %s", season)
-            records = load_current_nflverse_records(
-                season=season,
-                cache_dir=args.cache_dir,
-                refresh=args.refresh,
-            )
+            try:
+                records = load_current_nflverse_records(
+                    season=season,
+                    cache_dir=args.cache_dir,
+                    refresh=args.refresh,
+                )
+            except HTTPError as exc:
+                if exc.code == 404 and season == args.end_season:
+                    logging.warning(
+                        "nflverse PBP for season %s is not available yet; stopping after completed seasons",
+                        season,
+                    )
+                    break
+                raise
             result = process_records(session, records)
             _merge_results(total, result)
             logging.info("Season %s result: %s", season, result)
@@ -58,4 +76,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

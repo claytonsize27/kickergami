@@ -1,10 +1,16 @@
 import pandas as pd
 
 from app.data_sources.nflverse_pbp import current_nfl_season, normalize_nflverse_pbp
+from scripts.backfill_nflverse import default_end_season
 
 
 def test_current_nfl_season_handles_january() -> None:
     assert current_nfl_season(pd.Timestamp("2026-01-10").date()) == 2025
+
+
+def test_nflverse_backfill_default_end_season_skips_offseason_future_file() -> None:
+    assert default_end_season(pd.Timestamp("2026-06-08").date()) == 2025
+    assert default_end_season(pd.Timestamp("2026-09-08").date()) == 2026
 
 
 def test_normalize_nflverse_pbp_kicker_lines() -> None:
@@ -100,4 +106,3 @@ def test_normalize_nflverse_pbp_kicker_lines() -> None:
     assert record.fg_missed == 1
     assert record.fg_yards_total == 33
     assert record.combo_key == "1-1-1-1-33"
-
